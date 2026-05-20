@@ -1,0 +1,153 @@
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.1 building client environment for production...
+transforming...
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 1681 modules transformed.
+✗ Build failed in 2.85s
+client/src/App.tsx (8:9): "AppLayout" is not exported by "client/src/components/AppLayout.tsx", imported by "client/src/App.tsx".
+file: /Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/App.tsx:8:9
+
+ 6: import { AuthProvider, useAuth } from "./lib/auth";
+ 7: import { ThemeProvider } from "./components/ThemeProvider";
+ 8: import { AppLayout } from "./components/AppLayout";
+             ^
+ 9: import AuthPage from "./pages/auth";
+10: import DashboardPage from "./pages/dashboard";
+
+    at getRollupError (file:///Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at Module.error (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:17040:16)
+    at Module.traceVariable (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:17452:29)
+    at ModuleScope.findVariable (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:15070:39)
+    at FunctionScope.findVariable (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at FunctionBodyScope.findVariable (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at Identifier.bind (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:5447:40)
+    at CallExpression.bind (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:2825:28)
+    at CallExpression.bind (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/rollup/dist/es/shared/node-entry.js:12179:15) {
+  binding: 'AppLayout',
+  code: 'MISSING_EXPORT',
+  exporter: '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/AppLayout.tsx',
+  id: '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/App.tsx',
+  url: 'https://rollupjs.org/troubleshooting/#error-name-is-not-exported-by-module',
+  pos: 437,
+  loc: {
+    column: 9,
+    file: '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/App.tsx',
+    line: 8
+  },
+  frame: ' 6: import { AuthProvider, useAuth } from "./lib/auth";\n' +
+    ' 7: import { ThemeProvider } from "./components/ThemeProvider";\n' +
+    ' 8: import { AppLayout } from "./components/AppLayout";\n' +
+    '             ^\n' +
+    ' 9: import AuthPage from "./pages/auth";\n' +
+    '10: import DashboardPage from "./pages/dashboard";',
+  watchFiles: [
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/index.html',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/main.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/package.json',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/react-dom/client.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/react/jsx-runtime.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/App.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/index.css',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/react-dom/index.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/react/cjs/react-jsx-runtime.production.min.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/hooks/use-toast.ts',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/lib/api.ts',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/lib/queryClient.ts',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/lib/utils.ts',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/AppLayout.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/PerplexityAttribution.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ThemeProvider.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/accordion.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/alert-dialog.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/alert.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/aspect-ratio.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/avatar.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/badge.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/breadcrumb.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/button.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/calendar.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/card.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/carousel.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/chart.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/checkbox.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/collapsible.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/command.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/context-menu.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/dialog.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/drawer.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/dropdown-menu.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/form.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/hover-card.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/input-otp.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/input.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/label.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/menubar.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/navigation-menu.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/pagination.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/popover.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/progress.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/radio-group.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/resizable.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/scroll-area.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/select.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/separator.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/sheet.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/sidebar.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/skeleton.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/slider.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/switch.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/table.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/tabs.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/textarea.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/toast.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/toaster.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/toggle-group.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/toggle.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/components/ui/tooltip.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/hooks/use-mobile.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/lib/auth.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/lib/theme.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/auth.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/dashboard.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/exam.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/flashcards.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/intersections.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/not-found.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/practice.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/src/pages/profile.tsx',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/tailwind.config.ts',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/index.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/wouter/src/index.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/wouter/src/use-hash-location.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/react/index.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/react-dom/cjs/react-dom.production.min.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/query-core/build/modern/index.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/types.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useSuspenseQuery.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useQuery.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useSuspenseInfiniteQuery.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useQueries.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useSuspenseQueries.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/usePrefetchQuery.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/infiniteQueryOptions.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/queryOptions.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/usePrefetchInfiniteQuery.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useIsFetching.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/HydrationBoundary.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/QueryErrorResetBoundary.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useMutation.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useMutationState.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/mutationOptions.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/useInfiniteQuery.js',
+    '/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/@tanstack/react-query/build/modern/IsRestoringProvider.js',
+    ... 1605 more items
+  ],
+  Symbol(augmented): true
+}
