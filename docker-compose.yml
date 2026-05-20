@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prawo-jazdy-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"   # Expose Express proxy locally on host
+      - "8000:8000"   # Optional: Direct access to FastAPI
+    volumes:
+      # Persist SQLite database (mounting the folder is safer than the file)
+      - ./prawo_jazdy_backend:/app/prawo_jazdy_data
+      # Multimedia files (questions) - user should copy their multimedia folder here
+      - ./media:/app/prawo_jazdy_backend/media
+      # Road signs images
+      - ./prawo_jazdy_backend/znaki_drogowe_img:/app/prawo_jazdy_backend/znaki_drogowe_img
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DATABASE_URL=sqlite+aiosqlite:////app/prawo_jazdy_data/prawo_jazdy.db

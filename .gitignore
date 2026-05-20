@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.npm/
+dist/
+dist-server/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+
+# Data & Database
+*.db
+*.sqlite3
+prawo_jazdy_data/
+prawo_jazdy_backend/prawo_jazdy.db
+
+# Large Media
+media/
+multimedia/
+*.mp4
+*.wmv
+*.MOV
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log

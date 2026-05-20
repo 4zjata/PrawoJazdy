@@ -1,0 +1,25 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+10:51:45 PM [express] serving on port 5000
+(!) Failed to run dependency scan. Skipping dependency pre-bundling. Error:   Failed to scan for dependencies from entries:
+  /Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/client/index.html
+
+  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNo matching export in "client/src/components/AppLayout.tsx" for import "AppLayout"[0m
+
+    client/src/App.tsx:8:9:
+[37m      8 │ import { [32mAppLayout[37m } from "./components/AppLayout";
+        ╵          [32m~~~~~~~~~[0m
+
+
+    at failureErrorWithLog (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:1748:15)
+    at /Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:1207:25
+    at runOnEndCallbacks (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:1588:45)
+    at buildResponseToResult (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:1205:7)
+    at /Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:1217:9
+    at new Promise (<anonymous>)
+    at requestCallbacks.on-end (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:1216:54)
+    at handleRequest (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:909:17)
+    at handleIncomingPacket (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:934:7)
+    at Socket.readFromStdout (/Users/tcp/Desktop/repo/prawo_jazdy_KOMPLET/prawo-jazdy-app/node_modules/vite/node_modules/esbuild/lib/main.js:862:7)
