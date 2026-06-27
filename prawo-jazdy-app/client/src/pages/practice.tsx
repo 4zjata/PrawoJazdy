@@ -313,7 +313,16 @@ export default function PracticePage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Trafność</span>
-                  <span className="font-medium" data-testid="text-session-accuracy">
+                  <span
+                    className={`font-medium ${
+                      sessionStats.answered > 0
+                        ? Math.round((sessionStats.correct / sessionStats.answered) * 100) >= 92
+                          ? "text-green-600"
+                          : "text-red-600"
+                        : ""
+                    }`}
+                    data-testid="text-session-accuracy"
+                  >
                     {sessionStats.answered > 0
                       ? `${Math.round((sessionStats.correct / sessionStats.answered) * 100)}%`
                       : "—"}
