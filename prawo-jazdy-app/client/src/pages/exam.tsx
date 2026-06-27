@@ -352,63 +352,61 @@ export default function ExamPage() {
     const isUrgent = timeLeft < 120;
 
     return (
-      <div className="p-0 sm:p-4 lg:p-6 max-w-4xl mx-auto space-y-3 sm:space-y-4">
+      <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-4">
         {/* Header bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 sm:px-0 mt-3 sm:mt-0">
-          <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
-            <Badge variant="outline" data-testid="badge-question-counter" className="text-xs px-2 py-0.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" data-testid="badge-question-counter">
               Pytanie {currentIndex + 1}/{session.questions.length}
             </Badge>
-            <Badge variant="outline" className="text-xs px-2 py-0.5">
+            <Badge variant="outline">
               {currentQuestion.points} pkt
             </Badge>
-            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 hidden sm:inline-flex">
+            <Badge variant="secondary" className="text-xs">
               {currentQuestion.scope === "PODSTAWOWY" ? "Podstawowy" : "Specjalistyczny"}
             </Badge>
           </div>
-          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 mt-1 sm:mt-0">
+          <div className="flex items-center gap-4">
             <div
-              className={"flex items-center gap-1 font-mono text-xs sm:text-sm font-bold " + (
+              className={"flex items-center gap-1.5 font-mono text-sm font-bold " + (
                 qTimeLeft <= 5 && qPhase !== 'playing' ? "text-destructive animate-pulse" : "text-primary"
               )}
             >
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-4 h-4" />
               {qPhase === "reading" ? "Zapoznaj się: " + qTimeLeft + "s" : qPhase === "playing" ? "Odtwarzanie..." : "Odpowiedź: " + qTimeLeft + "s"}
             </div>
             <div
-              className={"flex items-center gap-1 font-mono text-xs sm:text-sm font-bold " + (
+              className={"flex items-center gap-1.5 font-mono text-sm font-bold " + (
                 isUrgent ? "text-destructive" : "text-foreground"
               )}
               data-testid="text-timer"
             >
-              <Clock className={"w-3.5 h-3.5 " + (isUrgent ? "animate-pulse" : "")} />
+              <Clock className={"w-4 h-4 " + (isUrgent ? "animate-pulse" : "")} />
               {formatTime(timeLeft)}
             </div>
           </div>
         </div>
 
-        <div className="px-4 sm:px-0">
-          <Progress value={progress} className="h-1.5" />
-        </div>
+        <Progress value={progress} className="h-1.5" />
 
-        <Card className="rounded-none sm:rounded-xl border-x-0 sm:border">
-          <CardContent className="p-3 sm:p-6 pt-4 sm:pt-6">
-            <div className="flex justify-between items-start mb-4 sm:mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-start mb-6">
               <p
-                className="text-sm sm:text-base font-medium text-foreground leading-relaxed"
+                className="text-base font-medium text-foreground leading-relaxed"
                 data-testid="text-question"
               >
                 {currentQuestion.question_text}
               </p>
               {qPhase === "reading" && (
-                <Button variant="outline" size="sm" onClick={() => setQTimeLeft(0)} className="ml-3 sm:ml-4 shrink-0 h-8 text-xs px-2.5">
+                <Button variant="outline" size="sm" onClick={() => setQTimeLeft(0)} className="ml-4 shrink-0">
                   Gotowe
                 </Button>
               )}
             </div>
 
             {currentQuestion.media_filename && qPhase !== "reading" && (
-              <div className="mb-4 sm:mb-6 mx-[-12px] sm:mx-0 rounded-none sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
+              <div className="mb-6 mx-[-16px] sm:mx-0 rounded-md sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
                 {currentQuestion.media_filename.toLowerCase().endsWith(".wmv") || currentQuestion.media_filename.toLowerCase().endsWith(".mp4") ? (
                   <video
                     src={API_BASE + "/api/media/" + currentQuestion.media_filename.replace(/\.wmv$/i, ".mp4")}
@@ -431,10 +429,11 @@ export default function ExamPage() {
             )}
 
             {currentQuestion.question_type === "TAK_NIE" ? (
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant={answers[currentQuestion.question_id] === "T" ? "default" : "outline"}
-                  className="h-12 sm:h-14 text-sm sm:text-base"
+                  size="lg"
+                  className="h-14 text-base"
                   disabled={qPhase === "reading"}
                   onClick={() => handleAnswer("T")}
                   data-testid="button-answer-tak"
@@ -443,7 +442,8 @@ export default function ExamPage() {
                 </Button>
                 <Button
                   variant={answers[currentQuestion.question_id] === "N" ? "default" : "outline"}
-                  className="h-12 sm:h-14 text-sm sm:text-base"
+                  size="lg"
+                  className="h-14 text-base"
                   disabled={qPhase === "reading"}
                   onClick={() => handleAnswer("N")}
                   data-testid="button-answer-nie"
@@ -452,7 +452,7 @@ export default function ExamPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-1.5 sm:space-y-2">
+              <div className="space-y-2">
                 {(["A", "B", "C"] as const).map((letter) => {
                   const answerText =
                     letter === "A"
@@ -465,13 +465,13 @@ export default function ExamPage() {
                     <Button
                       key={letter}
                       variant={answers[currentQuestion.question_id] === letter ? "default" : "outline"}
-                      className="w-full justify-start h-auto py-2.5 px-3 sm:py-3 sm:px-4 text-left whitespace-normal text-xs sm:text-sm"
+                      className="w-full justify-start h-auto py-3 px-4 text-left whitespace-normal"
                       disabled={qPhase === "reading"}
                       onClick={() => handleAnswer(letter)}
                       data-testid={"button-answer-" + letter.toLowerCase()}
                     >
                       <span className="font-bold mr-3 shrink-0">{letter}.</span>
-                      <span className="text-xs sm:text-sm">{answerText}</span>
+                      <span className="text-sm">{answerText}</span>
                     </Button>
                   );
                 })}
@@ -481,12 +481,11 @@ export default function ExamPage() {
         </Card>
 
         {/* Navigation */}
-        <div className="flex justify-end px-4 sm:px-0">
+        <div className="flex justify-end">
           <Button
             onClick={handleNext}
             disabled={!answered}
             data-testid="button-next-question"
-            className="w-full sm:w-auto"
           >
             {currentIndex === session.questions.length - 1 ? "Zakończ egzamin" : "Następne pytanie"}
             <ArrowRight className="w-4 h-4 ml-2" />
