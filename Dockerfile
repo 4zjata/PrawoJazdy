@@ -28,11 +28,11 @@ RUN pip install --no-cache-dir -r ./prawo_jazdy_backend/requirements.txt
 COPY prawo_jazdy_backend/ ./prawo_jazdy_backend/
 
 # 2. Prepare Frontend Production Runtime
-COPY --from=builder /app/frontend/dist ./prawo-jazdy-app/dist
-COPY --from=builder /app/frontend/package*.json ./prawo-jazdy-app/
-# We need production node_modules because the server bundle has 'external' deps
 WORKDIR /app/prawo-jazdy-app
+COPY --from=builder /app/frontend/package*.json ./
+# We need production node_modules because the server bundle has 'external' deps
 RUN npm install --omit=dev && npm cache clean --force
+COPY --from=builder /app/frontend/dist ./dist
 
 # 3. Startup Configuration
 WORKDIR /app
