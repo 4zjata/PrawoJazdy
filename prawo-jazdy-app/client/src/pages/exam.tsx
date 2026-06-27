@@ -352,9 +352,9 @@ export default function ExamPage() {
     const isUrgent = timeLeft < 120;
 
     return (
-      <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-4">
+      <div className="p-2 sm:p-4 lg:p-6 max-w-4xl mx-auto space-y-4">
         {/* Header bar */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-2 sm:px-0">
           <div className="flex items-center gap-3">
             <Badge variant="outline" data-testid="badge-question-counter">
               Pytanie {currentIndex + 1}/{session.questions.length}
@@ -387,10 +387,12 @@ export default function ExamPage() {
           </div>
         </div>
 
-        <Progress value={progress} className="h-1.5" />
+        <div className="px-2 sm:px-0">
+          <Progress value={progress} className="h-1.5" />
+        </div>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-2 sm:p-6 pt-4 sm:pt-6">
             <div className="flex justify-between items-start mb-6">
               <p
                 className="text-base font-medium text-foreground leading-relaxed"
@@ -406,7 +408,7 @@ export default function ExamPage() {
             </div>
 
             {currentQuestion.media_filename && qPhase !== "reading" && (
-              <div className="mb-6 mx-[-16px] sm:mx-0 rounded-md sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
+              <div className="mb-4 sm:mb-6 mx-[-8px] sm:mx-0 rounded-none sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
                 {currentQuestion.media_filename.toLowerCase().endsWith(".wmv") || currentQuestion.media_filename.toLowerCase().endsWith(".mp4") ? (
                   <video
                     src={API_BASE + "/api/media/" + currentQuestion.media_filename.replace(/\.wmv$/i, ".mp4")}

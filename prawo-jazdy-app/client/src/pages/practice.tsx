@@ -94,8 +94,8 @@ export default function PracticePage() {
   }, []);
 
   return (
-    <div className="p-4 lg:p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-2 sm:p-4 lg:p-6 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 px-2 sm:px-0">
         <div>
           <h1 className="text-xl font-bold text-foreground flex items-center gap-2" data-testid="text-practice-title">
             <BookOpen className="w-5 h-5 text-primary" />
@@ -123,7 +123,7 @@ export default function PracticePage() {
             </Card>
           ) : question ? (
             <Card className={flashClass}>
-              <CardContent className="pt-6">
+              <CardContent className="p-2 sm:p-6 pt-4 sm:pt-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Badge variant="outline">{question.question_number}</Badge>
                   <Badge variant="secondary">{question.points} pkt</Badge>
@@ -133,7 +133,7 @@ export default function PracticePage() {
                 </div>
                 
                 {question.media_filename && (
-                  <div className="mb-6 mx-[-16px] sm:mx-0 rounded-md sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
+                  <div className="mb-4 sm:mb-6 mx-[-8px] sm:mx-0 rounded-none sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
                     {question.media_filename.toLowerCase().endsWith(".wmv") || question.media_filename.toLowerCase().endsWith(".mp4") ? (
                       <video
                         src={`${API_BASE}/api/media/${question.media_filename.replace(/\.wmv$/i, ".mp4")}`}
