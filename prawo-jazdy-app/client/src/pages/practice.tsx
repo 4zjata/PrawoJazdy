@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, API_BASE } from "@/lib/queryClient";
+import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +94,45 @@ export default function PracticePage() {
     setQuestionKey((k) => k + 1);
   }, []);
 
+  // Obsługa skrótów klawiszowych dla sprawnego ćwiczenia
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      if (!question) return;
+
+      if (e.code === "Space") {
+        if (answered) {
+          e.preventDefault();
+          handleNext();
+        }
+      } else if (!answered) {
+        if (e.code === "Digit1" || e.code === "Numpad1") {
+          e.preventDefault();
+          if (question.question_type === "TAK_NIE") handleAnswer("T");
+          else handleAnswer("A");
+        } else if (e.code === "Digit2" || e.code === "Numpad2") {
+          e.preventDefault();
+          if (question.question_type === "TAK_NIE") handleAnswer("N");
+          else handleAnswer("B");
+        } else if (e.code === "Digit3" || e.code === "Numpad3") {
+          if (question.question_type !== "TAK_NIE") {
+            e.preventDefault();
+            handleAnswer("C");
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [question, answered, handleAnswer, handleNext]);
+
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-4 sm:mb-6 px-2 sm:px-0">
@@ -135,10 +175,11 @@ export default function PracticePage() {
                 {question.media_filename && (
                   <div className="mb-4 sm:mb-6 mx-[-8px] sm:mx-0 rounded-none sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
                     {question.media_filename.toLowerCase().endsWith(".wmv") || question.media_filename.toLowerCase().endsWith(".mp4") ? (
-                      <video
+                      <CustomVideoPlayer
+                        mode="practice"
                         src={`${API_BASE}/api/media/${question.media_filename.replace(/\.wmv$/i, ".mp4")}`}
-                        controls
-                        className="max-h-[280px] sm:max-h-[500px] w-full object-contain"
+                        isAnswered={answered}
+                        className="max-h-[280px] sm:max-h-[500px]"
                       />
                     ) : (
                       <img

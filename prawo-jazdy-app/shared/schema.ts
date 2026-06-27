@@ -9,6 +9,8 @@ export interface User {
   last_active: string;
 }
 
+export type InsertUser = Omit<User, "id" | "created_at" | "last_active">;
+
 export interface TokenResponse {
   access_token: string;
   token_type: string;
