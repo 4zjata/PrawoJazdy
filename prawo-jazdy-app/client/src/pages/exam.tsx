@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient, API_BASE } from "@/lib/queryClient";
+import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -410,15 +411,14 @@ export default function ExamPage() {
             {currentQuestion.media_filename && qPhase !== "reading" && (
               <div className="mb-4 sm:mb-6 mx-[-8px] sm:mx-0 rounded-none sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
                 {currentQuestion.media_filename.toLowerCase().endsWith(".wmv") || currentQuestion.media_filename.toLowerCase().endsWith(".mp4") ? (
-                  <video
+                  <CustomVideoPlayer
+                    mode="exam"
                     src={API_BASE + "/api/media/" + currentQuestion.media_filename.replace(/\.wmv$/i, ".mp4")}
-                    autoPlay
                     onEnded={() => {
                       setQPhase("answering");
                       setQTimeLeft(15);
                     }}
-                    style={{ pointerEvents: 'none' }}
-                    className="max-h-[280px] sm:max-h-[500px] w-full object-contain"
+                    className="max-h-[280px] sm:max-h-[500px]"
                   />
                 ) : (
                   <img
@@ -625,10 +625,10 @@ export default function ExamPage() {
                         </summary>
                         <div className="mt-4 rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
                           {ans.media_filename.toLowerCase().endsWith(".wmv") || ans.media_filename.toLowerCase().endsWith(".mp4") ? (
-                            <video
+                            <CustomVideoPlayer
+                              mode="review"
                               src={API_BASE + "/api/media/" + ans.media_filename.replace(/\.wmv$/i, ".mp4")}
-                              controls
-                              className="max-h-[400px] w-full object-contain"
+                              className="max-h-[400px]"
                             />
                           ) : (
                             <img
