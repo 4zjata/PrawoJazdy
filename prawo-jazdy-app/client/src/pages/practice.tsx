@@ -94,14 +94,14 @@ export default function PracticePage() {
   }, []);
 
   return (
-    <div className="p-0 sm:p-4 lg:p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-3 sm:mb-6 px-4 sm:px-0 mt-3 sm:mt-0">
+    <div className="p-4 lg:p-6 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2" data-testid="text-practice-title">
-            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2" data-testid="text-practice-title">
+            <BookOpen className="w-5 h-5 text-primary" />
             Ćwiczenia
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Losowe pytania z natychmiastową informacją zwrotną
           </p>
         </div>
@@ -122,9 +122,9 @@ export default function PracticePage() {
               </CardContent>
             </Card>
           ) : question ? (
-            <Card className={`rounded-none sm:rounded-xl border-x-0 sm:border ${flashClass}`}>
-              <CardContent className="p-3 sm:p-6 pt-4 sm:pt-6">
-                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <Card className={flashClass}>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 mb-4">
                   <Badge variant="outline">{question.question_number}</Badge>
                   <Badge variant="secondary">{question.points} pkt</Badge>
                   <Badge variant="secondary" className="text-xs">
@@ -133,7 +133,7 @@ export default function PracticePage() {
                 </div>
                 
                 {question.media_filename && (
-                  <div className="mb-4 sm:mb-6 mx-[-12px] sm:mx-0 rounded-none sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
+                  <div className="mb-6 mx-[-16px] sm:mx-0 rounded-md sm:rounded-lg overflow-hidden bg-black/5 flex items-center justify-center">
                     {question.media_filename.toLowerCase().endsWith(".wmv") || question.media_filename.toLowerCase().endsWith(".mp4") ? (
                       <video
                         src={`${API_BASE}/api/media/${question.media_filename.replace(/\.wmv$/i, ".mp4")}`}
@@ -151,14 +151,14 @@ export default function PracticePage() {
                 )}
 
                 <p
-                  className="text-sm sm:text-base font-medium text-foreground leading-relaxed mb-4 sm:mb-6"
+                  className="text-base font-medium text-foreground leading-relaxed mb-6"
                   data-testid="text-practice-question"
                 >
                   {question.question_text}
                 </p>
 
                 {question.question_type === "TAK_NIE" ? (
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {(["T", "N"] as const).map((ans) => {
                       let variant: "default" | "outline" | "destructive" = "outline";
                       let extraClass = "";
@@ -174,7 +174,8 @@ export default function PracticePage() {
                         <Button
                           key={ans}
                           variant={variant}
-                          className={`h-12 sm:h-14 text-sm sm:text-base ${extraClass}`}
+                          size="lg"
+                          className={`h-14 text-base ${extraClass}`}
                           onClick={() => handleAnswer(ans)}
                           disabled={answered}
                           data-testid={`button-practice-${ans === "T" ? "tak" : "nie"}`}
@@ -185,7 +186,7 @@ export default function PracticePage() {
                     })}
                   </div>
                 ) : (
-                  <div className="space-y-1.5 sm:space-y-2">
+                  <div className="space-y-2">
                     {(["A", "B", "C"] as const).map((letter) => {
                       const text =
                         letter === "A"
@@ -208,13 +209,13 @@ export default function PracticePage() {
                         <Button
                           key={letter}
                           variant={variant}
-                          className={`w-full justify-start h-auto py-2.5 px-3 sm:py-3 sm:px-4 text-left whitespace-normal text-xs sm:text-sm ${extraClass}`}
+                          className={`w-full justify-start h-auto py-3 px-4 text-left whitespace-normal ${extraClass}`}
                           onClick={() => handleAnswer(letter)}
                           disabled={answered}
                           data-testid={`button-practice-${letter.toLowerCase()}`}
                         >
                           <span className="font-bold mr-3 shrink-0">{letter}.</span>
-                          <span className="text-xs sm:text-sm">{text}</span>
+                          <span className="text-sm">{text}</span>
                         </Button>
                       );
                     })}
