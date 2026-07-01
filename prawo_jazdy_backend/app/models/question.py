@@ -38,3 +38,4 @@ class Question(Base):
     answer_a_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     answer_b_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     answer_c_en: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
