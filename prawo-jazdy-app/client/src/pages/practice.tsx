@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient, API_BASE } from "@/lib/queryClient";
+import { apiRequest, queryClient, API_BASE, getAuthToken } from "@/lib/queryClient";
 import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -120,13 +120,106 @@ export default function PracticePage() {
     }
   }, [answered]);
 
-  // Load AI explanation on question change
-  useEffect(() => {
+  const loadAiExplanation = useCallback((questionId: number) => {
     setAiExplanation(null);
-    setAiLoading(false);
+    setAiLoading(true);
     setAiError(null);
     setShowAi(false);
 
+    let isMounted = true;
+    let accumulatedText = "";
+    let buffer = "";
+
+    const fetchStream = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        const token = getAuthToken();
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(`${API_BASE}/api/questions/${questionId}/explain-ai`, {
+          headers
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || `Błąd serwera (status ${res.status})`);
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) {
+          throw new Error("Strumień odpowiedzi nie jest dostępny.");
+        }
+
+        const decoder = new TextDecoder();
+        let done = false;
+
+        while (!done && isMounted) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          
+          const chunkValue = decoder.decode(value, { stream: !done });
+          buffer += chunkValue;
+          
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          
+          for (const line of lines) {
+            const cleanLine = line.trim();
+            if (!cleanLine) continue;
+            
+            if (cleanLine.startsWith("data: ")) {
+              const dataStr = cleanLine.substring(6);
+              if (dataStr === "[DONE]") {
+                done = true;
+                break;
+              }
+              
+              try {
+                const parsed = JSON.parse(dataStr);
+                if (parsed.error) {
+                  throw new Error(parsed.error);
+                }
+                const content = parsed.choices?.[0]?.delta?.content;
+                if (content && isMounted) {
+                  accumulatedText += content;
+                  setAiExplanation(accumulatedText);
+                }
+              } catch (e: any) {
+                if (dataStr.includes('"error"')) {
+                  try {
+                    const parsed = JSON.parse(dataStr);
+                    throw new Error(parsed.error);
+                  } catch (jsonErr) {}
+                }
+                console.error("Błąd parsowania SSE chunk:", e);
+              }
+            }
+          }
+        }
+        
+        if (isMounted) {
+          setAiLoading(false);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          console.error("AI stream error:", err);
+          setAiError(err.message || "Błąd podczas generowania podpowiedzi AI");
+          setAiLoading(false);
+        }
+      }
+    };
+
+    fetchStream();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Load AI explanation on question change
+  useEffect(() => {
     if (!question) return;
 
     const isVideo = question.media_filename && (
@@ -135,38 +228,16 @@ export default function PracticePage() {
     );
 
     if (isVideo) {
+      setAiExplanation(null);
+      setAiLoading(false);
+      setAiError(null);
+      setShowAi(false);
       return;
     }
 
-    setAiLoading(true);
-    let isMounted = true;
-
-    apiRequest("GET", `/api/questions/${question.id}/explain-ai`)
-      .then(async (res) => {
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.detail || "Nie udało się pobrać wyjaśnienia AI");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (isMounted) {
-          setAiExplanation(data.explanation);
-          setAiLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          console.error("AI error:", err);
-          setAiError(err.message || "Błąd podczas generowania podpowiedzi AI");
-          setAiLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [question?.id]);
+    const cancel = loadAiExplanation(question.id);
+    return cancel;
+  }, [question?.id, loadAiExplanation]);
 
   const handleAnswer = useCallback(
     (answer: string) => {
@@ -421,26 +492,7 @@ export default function PracticePage() {
                             variant="outline" 
                             size="sm" 
                             className="h-8 border-destructive/30 hover:bg-destructive/10 hover:text-destructive text-destructive font-medium text-[11px]"
-                            onClick={() => {
-                              setAiLoading(true);
-                              setAiError(null);
-                              apiRequest("GET", `/api/questions/${question.id}/explain-ai`)
-                                .then(async (res) => {
-                                  if (!res.ok) {
-                                    const errData = await res.json();
-                                    throw new Error(errData.detail || "Nie udało się pobrać wyjaśnienia AI");
-                                  }
-                                  return res.json();
-                                })
-                                .then((data) => {
-                                  setAiExplanation(data.explanation);
-                                  setAiLoading(false);
-                                })
-                                .catch((err) => {
-                                  setAiError(err.message || "Błąd ponownego ładowania wyjaśnienia AI.");
-                                  setAiLoading(false);
-                                });
-                            }}
+                            onClick={() => loadAiExplanation(question.id)}
                           >
                             Spróbuj ponownie
                           </Button>
