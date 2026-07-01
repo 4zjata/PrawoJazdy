@@ -7,8 +7,12 @@ import ssl
 import urllib.request
 import urllib.error
 import asyncio
+import requests
+import queue
+import threading
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -119,7 +123,7 @@ async def explain_question_ai(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Generates AI explanation using clanker.voidy.xyz sonnet model."""
+    """Generates AI explanation using clanker.voidy.xyz sonnet model (streaming)."""
     result = await db.execute(select(Question).where(Question.id == question_id))
     question = result.scalar_one_or_none()
     if not question:
@@ -142,9 +146,8 @@ async def explain_question_ai(
             f"Treść pytania: {question.question_text}\n"
             f"Możliwe odpowiedzi: TAK lub NIE.\n"
             f"Poprawna odpowiedź: {correct_friendly}.\n\n"
-            f"Napisz zwięzłe, jasne i profesjonalne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa "
-            f"na podstawie polskich przepisów ruchu drogowego (Prawo o ruchu drogowym). Skup się na konkretach i odnieś się "
-            f"do sytuacji przedstawionej w pytaniu."
+            f"Napisz BARDZO ZWIĘZŁE (maksymalnie 2 zdania), jasne i konkretne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa. "
+            f"Przejdź od razu do rzeczy (bez wstępów w stylu 'odpowiedź jest poprawna, ponieważ...')."
         )
     else:
         correct_text = ""
@@ -165,9 +168,8 @@ async def explain_question_ai(
             f"B: {question.answer_b}\n"
             f"C: {question.answer_c}\n\n"
             f"Poprawna odpowiedź: {correct_ans} ({correct_text}).\n\n"
-            f"Napisz zwięzłe, jasne i profesjonalne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa, "
-            f"a pozostałe opcje są błędne, na podstawie polskich przepisów ruchu drogowego (Prawo o ruchu drogowym). "
-            f"Skup się na konkretach i odnieś się do sytuacji przedstawionej w pytaniu."
+            f"Napisz BARDZO ZWIĘZŁE (maksymalnie 2 zdania), jasne i konkretne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa, "
+            f"a pozostałe opcje są błędne. Przejdź od razu do rzeczy (bez wstępów)."
         )
 
     # Check for image
@@ -210,11 +212,12 @@ async def explain_question_ai(
             {"role": "user", "content": prompt_text}
         ]
 
-    # Call clanker API
-    def make_api_call():
+    # Call clanker API streaming
+    async def make_api_call_stream():
         api_key = settings.CLANKER_API_KEY
         if not api_key:
-            raise ValueError("Brak skonfigurowanego klucza API (CLANKER_API_KEY) w pliku .env.")
+            yield "data: " + json.dumps({"error": "Brak skonfigurowanego klucza API (CLANKER_API_KEY) w pliku .env."}) + "\n\n"
+            return
             
         url = settings.CLANKER_API_URL.rstrip('/') + "/v1/chat/completions"
         headers = {
@@ -224,31 +227,46 @@ async def explain_question_ai(
         chat_data = {
             "model": "sonnet",
             "messages": messages,
-            "max_tokens": 800
+            "max_tokens": 300,
+            "stream": True
         }
         
-        context = ssl._create_unverified_context()
-        req = urllib.request.Request(
-            url, 
-            headers=headers, 
-            data=json.dumps(chat_data).encode('utf-8'), 
-            method="POST"
-        )
+        q = queue.Queue()
         
-        with urllib.request.urlopen(req, timeout=60, context=context) as response:
-            body = response.read().decode('utf-8')
-            return json.loads(body)
+        def run_request():
+            try:
+                # Disable SSL verify check to prevent certificate issues on macOS/VPS
+                response = requests.post(url, headers=headers, json=chat_data, stream=True, timeout=60, verify=False)
+                if response.status_code != 200:
+                    q.put(("error", f"Błąd API clanker: status {response.status_code}"))
+                    return
+                for line in response.iter_lines():
+                    if line:
+                        decoded = line.decode('utf-8').strip()
+                        q.put(("data", decoded))
+            except Exception as e:
+                q.put(("error", str(e)))
+            finally:
+                q.put(("done", None))
 
-    try:
-        response_data = await asyncio.to_thread(make_api_call)
-        explanation = response_data["choices"][0]["message"]["content"]
-        return {"explanation": explanation}
-    except Exception as e:
-        print(f"AI explanation API call failed: {e}")
-        raise HTTPException(
-            status_code=502, 
-            detail=f"Błąd komunikacji z asystentem AI: {str(e)}"
-        )
+        # Run request in background thread
+        thread = threading.Thread(target=run_request)
+        thread.start()
+        
+        while True:
+            try:
+                msg_type, val = q.get_nowait()
+                if msg_type == "done":
+                    break
+                elif msg_type == "error":
+                    yield "data: " + json.dumps({"error": val}) + "\n\n"
+                    break
+                elif msg_type == "data":
+                    yield f"{val}\n\n"
+            except queue.Empty:
+                await asyncio.sleep(0.05)
+
+    return StreamingResponse(make_api_call_stream(), media_type="text/event-stream")
 
 
 @router.get("/stats", response_model=QuestionStatsResponse)
