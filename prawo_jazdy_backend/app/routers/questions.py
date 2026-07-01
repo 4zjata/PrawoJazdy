@@ -214,6 +214,14 @@ async def explain_question_ai(
 
     # Call clanker API streaming
     async def make_api_call_stream():
+        if question.ai_explanation:
+            chunk = {
+                "choices": [{"delta": {"content": question.ai_explanation}}]
+            }
+            yield "data: " + json.dumps(chunk) + "\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
         api_key = settings.CLANKER_API_KEY
         if not api_key:
             yield "data: " + json.dumps({"error": "Brak skonfigurowanego klucza API (CLANKER_API_KEY) w pliku .env."}) + "\n\n"
@@ -253,15 +261,29 @@ async def explain_question_ai(
         thread = threading.Thread(target=run_request)
         thread.start()
         
+        full_text = ""
         while True:
             try:
                 msg_type, val = q.get_nowait()
                 if msg_type == "done":
+                    if full_text:
+                        question.ai_explanation = full_text
+                        await db.commit()
                     break
                 elif msg_type == "error":
                     yield "data: " + json.dumps({"error": val}) + "\n\n"
                     break
                 elif msg_type == "data":
+                    if val.startswith("data: "):
+                        data_str = val[6:]
+                        if data_str != "[DONE]":
+                            try:
+                                parsed = json.loads(data_str)
+                                content = parsed.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                if content:
+                                    full_text += content
+                            except:
+                                pass
                     yield f"{val}\n\n"
             except queue.Empty:
                 await asyncio.sleep(0.05)
