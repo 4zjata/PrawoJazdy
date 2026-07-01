@@ -1,5 +1,12 @@
 import random
 from datetime import datetime
+import base64
+import json
+import os
+import ssl
+import urllib.request
+import urllib.error
+import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
@@ -13,6 +20,7 @@ from app.models.spaced_repetition import UserQuestionProgress
 from app.schemas.question import QuestionResponse, AnswerRequest, AnswerResponse, QuestionStatsResponse
 from app.services.sm2_service import update_question_progress
 from app.services.gamification_service import award_question_points
+from app.config import settings
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
@@ -103,6 +111,144 @@ async def answer_question(
         points=points,
         explanation=explanation,
     )
+
+
+@router.get("/{question_id}/explain-ai")
+async def explain_question_ai(
+    question_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Generates AI explanation using clanker.voidy.xyz sonnet model."""
+    result = await db.execute(select(Question).where(Question.id == question_id))
+    question = result.scalar_one_or_none()
+    if not question:
+        raise HTTPException(status_code=404, detail="Pytanie nie znalezione")
+
+    # Exclude video questions
+    media_file = question.media_filename
+    if media_file and media_file.lower().endswith((".mp4", ".wmv")):
+        raise HTTPException(status_code=400, detail="Wyjaśnienia AI nie są dostępne dla pytań z filmem wideo.")
+
+    # Prepare prompt
+    correct_ans = question.correct_answer.upper()
+    
+    if question.question_type == "TAK_NIE":
+        correct_friendly = "TAK" if correct_ans == "T" else "NIE"
+        prompt_text = (
+            f"Jesteś ekspertem ds. przepisów ruchu drogowego w Polsce.\n"
+            f"Przeanalizuj poniższe pytanie egzaminacyjne na prawo jazdy (Numer pytania: {question.question_number}) "
+            f"i wyjaśnij, dlaczego poprawna odpowiedź to {correct_friendly}.\n\n"
+            f"Treść pytania: {question.question_text}\n"
+            f"Możliwe odpowiedzi: TAK lub NIE.\n"
+            f"Poprawna odpowiedź: {correct_friendly}.\n\n"
+            f"Napisz zwięzłe, jasne i profesjonalne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa "
+            f"na podstawie polskich przepisów ruchu drogowego (Prawo o ruchu drogowym). Skup się na konkretach i odnieś się "
+            f"do sytuacji przedstawionej w pytaniu."
+        )
+    else:
+        correct_text = ""
+        if correct_ans == "A":
+            correct_text = question.answer_a
+        elif correct_ans == "B":
+            correct_text = question.answer_b
+        elif correct_ans == "C":
+            correct_text = question.answer_c
+
+        prompt_text = (
+            f"Jesteś ekspertem ds. przepisów ruchu drogowego w Polsce.\n"
+            f"Przeanalizuj poniższe pytanie egzaminacyjne na prawo jazdy (Numer pytania: {question.question_number}) "
+            f"i wyjaśnij, dlaczego poprawna odpowiedź to {correct_ans} ({correct_text}).\n\n"
+            f"Treść pytania: {question.question_text}\n"
+            f"Opcje odpowiedzi:\n"
+            f"A: {question.answer_a}\n"
+            f"B: {question.answer_b}\n"
+            f"C: {question.answer_c}\n\n"
+            f"Poprawna odpowiedź: {correct_ans} ({correct_text}).\n\n"
+            f"Napisz zwięzłe, jasne i profesjonalne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa, "
+            f"a pozostałe opcje są błędne, na podstawie polskich przepisów ruchu drogowego (Prawo o ruchu drogowym). "
+            f"Skup się na konkretach i odnieś się do sytuacji przedstawionej w pytaniu."
+        )
+
+    # Check for image
+    has_image = False
+    encoded_string = ""
+    mime_type = "image/jpeg"
+    if media_file:
+        media_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media")
+        full_path = os.path.join(media_dir, media_file)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            try:
+                with open(full_path, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+                has_image = True
+                if media_file.lower().endswith(".png"):
+                    mime_type = "image/png"
+                elif media_file.lower().endswith(".gif"):
+                    mime_type = "image/gif"
+            except Exception as e:
+                print(f"Error reading image file {full_path}: {e}")
+
+    # Build messages payload
+    if has_image:
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt_text},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{encoded_string}"
+                        }
+                    }
+                ]
+            }
+        ]
+    else:
+        messages = [
+            {"role": "user", "content": prompt_text}
+        ]
+
+    # Call clanker API
+    def make_api_call():
+        api_key = settings.CLANKER_API_KEY
+        if not api_key:
+            raise ValueError("Brak skonfigurowanego klucza API (CLANKER_API_KEY) w pliku .env.")
+            
+        url = settings.CLANKER_API_URL.rstrip('/') + "/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        chat_data = {
+            "model": "sonnet",
+            "messages": messages,
+            "max_tokens": 800
+        }
+        
+        context = ssl._create_unverified_context()
+        req = urllib.request.Request(
+            url, 
+            headers=headers, 
+            data=json.dumps(chat_data).encode('utf-8'), 
+            method="POST"
+        )
+        
+        with urllib.request.urlopen(req, timeout=60, context=context) as response:
+            body = response.read().decode('utf-8')
+            return json.loads(body)
+
+    try:
+        response_data = await asyncio.to_thread(make_api_call)
+        explanation = response_data["choices"][0]["message"]["content"]
+        return {"explanation": explanation}
+    except Exception as e:
+        print(f"AI explanation API call failed: {e}")
+        raise HTTPException(
+            status_code=502, 
+            detail=f"Błąd komunikacji z asystentem AI: {str(e)}"
+        )
 
 
 @router.get("/stats", response_model=QuestionStatsResponse)
