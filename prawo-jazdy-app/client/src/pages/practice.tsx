@@ -15,6 +15,8 @@ import {
   Target,
   Flame,
   Loader2,
+  Sparkles,
+  Bot,
 } from "lucide-react";
 
 interface Question {
@@ -40,9 +42,41 @@ interface AnswerResult {
   explanation: string;
 }
 
+const formatMarkdown = (text: string) => {
+  return text.split("\n").map((line, idx) => {
+    const isBullet = line.trim().startsWith("-") || line.trim().startsWith("*");
+    const cleanLine = isBullet ? line.replace(/^[\s-*]+/, "") : line;
+    
+    const parts = cleanLine.split(/\*\*([^*]+)\*\*/g);
+    const formatted = parts.map((part, pIdx) => {
+      if (pIdx % 2 === 1) {
+        return <strong key={pIdx} className="font-bold text-foreground">{part}</strong>;
+      }
+      return part;
+    });
+
+    if (isBullet) {
+      return (
+        <li key={idx} className="ml-4 list-disc text-sm text-muted-foreground mt-1.5 leading-relaxed">
+          {formatted}
+        </li>
+      );
+    }
+    return (
+      <p key={idx} className="text-sm text-muted-foreground mt-2 leading-relaxed">
+        {formatted}
+      </p>
+    );
+  });
+};
+
 export default function PracticePage() {
   const [answered, setAnswered] = useState(false);
   const [result, setResult] = useState<AnswerResult | null>(null);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [showAi, setShowAi] = useState(false);
   const [flashClass, setFlashClass] = useState("");
   const [sessionStats, setSessionStats] = useState({ answered: 0, correct: 0, streak: 0 });
   const [questionKey, setQuestionKey] = useState(0);
@@ -78,6 +112,61 @@ export default function PracticePage() {
   });
 
   const question = questions?.[0];
+
+  // Auto reveal when user answers
+  useEffect(() => {
+    if (answered) {
+      setShowAi(true);
+    }
+  }, [answered]);
+
+  // Load AI explanation on question change
+  useEffect(() => {
+    setAiExplanation(null);
+    setAiLoading(false);
+    setAiError(null);
+    setShowAi(false);
+
+    if (!question) return;
+
+    const isVideo = question.media_filename && (
+      question.media_filename.toLowerCase().endsWith(".mp4") || 
+      question.media_filename.toLowerCase().endsWith(".wmv")
+    );
+
+    if (isVideo) {
+      return;
+    }
+
+    setAiLoading(true);
+    let isMounted = true;
+
+    apiRequest("GET", `/api/questions/${question.id}/explain-ai`)
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || "Nie udało się pobrać wyjaśnienia AI");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (isMounted) {
+          setAiExplanation(data.explanation);
+          setAiLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error("AI error:", err);
+          setAiError(err.message || "Błąd podczas generowania podpowiedzi AI");
+          setAiLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [question?.id]);
 
   const handleAnswer = useCallback(
     (answer: string) => {
@@ -162,7 +251,8 @@ export default function PracticePage() {
               </CardContent>
             </Card>
           ) : question ? (
-            <Card className={flashClass}>
+            <>
+              <Card className={flashClass}>
               <CardContent className="p-2 sm:p-6 pt-4 sm:pt-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Badge variant="outline">{question.question_number}</Badge>
@@ -281,6 +371,124 @@ export default function PracticePage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Sekcja Asystenta AI */}
+            {(() => {
+              const isVideo = question?.media_filename && (
+                question.media_filename.toLowerCase().endsWith(".mp4") || 
+                question.media_filename.toLowerCase().endsWith(".wmv")
+              );
+
+              if (isVideo || !question) return null;
+
+              return (
+                <Card className="mt-4 border border-purple-500/20 bg-gradient-to-br from-purple-500/5 via-transparent to-primary/5 shadow-sm overflow-hidden">
+                  <CardHeader className="py-3 px-4 sm:px-6 flex flex-row items-center justify-between border-b border-purple-500/10">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-purple-500 animate-pulse" />
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                        Asystent AI
+                        <Badge variant="secondary" className="text-[10px] bg-purple-500/10 text-purple-600 border border-purple-500/20 px-1.5 py-0">
+                          Sonnet
+                        </Badge>
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6">
+                    {aiLoading && (
+                      <div className="flex flex-col gap-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                          <span className="text-xs text-muted-foreground font-medium">
+                            AI analizuje sytuację na drodze za pomocą wyszukiwania sieciowego...
+                          </span>
+                        </div>
+                        <div className="space-y-2 mt-1">
+                          <Skeleton className="h-4 w-full bg-purple-500/5" />
+                          <Skeleton className="h-4 w-[90%] bg-purple-500/5" />
+                          <Skeleton className="h-4 w-[75%] bg-purple-500/5" />
+                        </div>
+                      </div>
+                    )}
+
+                    {aiError && (
+                      <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+                        <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <div className="space-y-2">
+                          <p className="font-semibold">Wystąpił błąd</p>
+                          <p className="text-muted-foreground">{aiError}</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 border-destructive/30 hover:bg-destructive/10 hover:text-destructive text-destructive font-medium text-[11px]"
+                            onClick={() => {
+                              setAiLoading(true);
+                              setAiError(null);
+                              apiRequest("GET", `/api/questions/${question.id}/explain-ai`)
+                                .then(async (res) => {
+                                  if (!res.ok) {
+                                    const errData = await res.json();
+                                    throw new Error(errData.detail || "Nie udało się pobrać wyjaśnienia AI");
+                                  }
+                                  return res.json();
+                                })
+                                .then((data) => {
+                                  setAiExplanation(data.explanation);
+                                  setAiLoading(false);
+                                })
+                                .catch((err) => {
+                                  setAiError(err.message || "Błąd ponownego ładowania wyjaśnienia AI.");
+                                  setAiLoading(false);
+                                });
+                            }}
+                          >
+                            Spróbuj ponownie
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!aiLoading && !aiError && aiExplanation && (
+                      <div>
+                        {!showAi && !answered ? (
+                          <div className="flex flex-col items-center justify-center py-6 text-center border-2 border-dashed border-purple-500/15 rounded-lg bg-purple-500/[0.02] p-4">
+                            <Sparkles className="w-8 h-8 text-purple-400 mb-2 opacity-80" />
+                            <p className="text-xs font-semibold text-foreground">Analiza AI jest gotowa</p>
+                            <p className="text-[11px] text-muted-foreground mt-1 max-w-[280px]">
+                              Rozwiąż pytanie lub kliknij poniżej, aby wyświetlić analizę AI i podpowiedź.
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3 h-9 border-purple-500/30 text-purple-600 hover:bg-purple-500/10 font-semibold gap-1.5 text-xs shadow-sm"
+                              onClick={() => setShowAi(true)}
+                            >
+                              <Brain className="w-3.5 h-3.5" />
+                              Pokaż podpowiedź AI
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4 animate-fade-in">
+                            <div className="bg-purple-500/5 border border-purple-500/10 rounded-lg p-3 sm:p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Bot className="w-4 h-4 text-purple-500" />
+                                <span className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wide">
+                                  Analiza Asystenta AI
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                {formatMarkdown(aiExplanation)}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+            </>
           ) : (
             <Card>
               <CardContent className="pt-6 text-center text-muted-foreground">
