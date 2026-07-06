@@ -240,8 +240,10 @@ async def explain_question_ai(
         }
         
         q = queue.Queue()
+        loop = asyncio.get_running_loop()
         
         def run_request():
+            full_text_bg = ""
             try:
                 # Disable SSL verify check to prevent certificate issues on macOS/VPS
                 response = requests.post(url, headers=headers, json=chat_data, stream=True, timeout=60, verify=False)
@@ -252,41 +254,53 @@ async def explain_question_ai(
                     if line:
                         decoded = line.decode('utf-8').strip()
                         q.put(("data", decoded))
+                        if decoded.startswith("data: "):
+                            data_str = decoded[6:]
+                            if data_str != "[DONE]":
+                                try:
+                                    parsed = json.loads(data_str)
+                                    content = parsed.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                    if content:
+                                        full_text_bg += content
+                                except:
+                                    pass
             except Exception as e:
                 q.put(("error", str(e)))
             finally:
                 q.put(("done", None))
+                if full_text_bg:
+                    async def save_to_db(qid, text):
+                        from app.database import async_session
+                        from sqlalchemy import select
+                        async with async_session() as session:
+                            result = await session.execute(select(Question).where(Question.id == qid))
+                            q_obj = result.scalar_one_or_none()
+                            if q_obj:
+                                q_obj.ai_explanation = text
+                                await session.commit()
+                    
+                    asyncio.run_coroutine_threadsafe(save_to_db(question_id, full_text_bg), loop)
 
         # Run request in background thread
         thread = threading.Thread(target=run_request)
         thread.start()
         
-        full_text = ""
-        while True:
-            try:
-                msg_type, val = q.get_nowait()
-                if msg_type == "done":
-                    if full_text:
-                        question.ai_explanation = full_text
-                        await db.commit()
-                    break
-                elif msg_type == "error":
-                    yield "data: " + json.dumps({"error": val}) + "\n\n"
-                    break
-                elif msg_type == "data":
-                    if val.startswith("data: "):
-                        data_str = val[6:]
-                        if data_str != "[DONE]":
-                            try:
-                                parsed = json.loads(data_str)
-                                content = parsed.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                                if content:
-                                    full_text += content
-                            except:
-                                pass
-                    yield f"{val}\n\n"
-            except queue.Empty:
-                await asyncio.sleep(0.05)
+        try:
+            while True:
+                try:
+                    msg_type, val = q.get_nowait()
+                    if msg_type == "done":
+                        break
+                    elif msg_type == "error":
+                        yield "data: " + json.dumps({"error": val}) + "\n\n"
+                        break
+                    elif msg_type == "data":
+                        yield f"{val}\n\n"
+                except queue.Empty:
+                    await asyncio.sleep(0.05)
+        except asyncio.CancelledError:
+            # Klient przerwał strumieniowanie (np. przechodząc do następnego pytania)
+            raise
 
     return StreamingResponse(make_api_call_stream(), media_type="text/event-stream")
 
