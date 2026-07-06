@@ -233,7 +233,7 @@ async def explain_question_ai(
             "Content-Type": "application/json"
         }
         chat_data = {
-            "model": "sonnet",
+            "model": "gem-gemini-3.5-flash",
             "messages": messages,
             "max_tokens": 300,
             "stream": True
