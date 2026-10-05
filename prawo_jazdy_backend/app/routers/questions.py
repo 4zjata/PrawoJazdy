@@ -1,18 +1,7 @@
 import random
 from datetime import datetime
-import base64
-import json
-import os
-import ssl
-import urllib.request
-import urllib.error
-import asyncio
-import requests
-import queue
-import threading
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +13,6 @@ from app.models.spaced_repetition import UserQuestionProgress
 from app.schemas.question import QuestionResponse, AnswerRequest, AnswerResponse, QuestionStatsResponse
 from app.services.sm2_service import update_question_progress
 from app.services.gamification_service import award_question_points
-from app.config import settings
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
@@ -113,196 +101,7 @@ async def answer_question(
         correct_answer=question.correct_answer,
         is_correct=is_correct,
         points=points,
-        explanation=explanation,
     )
-
-
-@router.get("/{question_id}/explain-ai")
-async def explain_question_ai(
-    question_id: int,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    """Generates AI explanation using clanker.voidy.xyz sonnet model (streaming)."""
-    result = await db.execute(select(Question).where(Question.id == question_id))
-    question = result.scalar_one_or_none()
-    if not question:
-        raise HTTPException(status_code=404, detail="Pytanie nie znalezione")
-
-    # Exclude video questions
-    media_file = question.media_filename
-    if media_file and media_file.lower().endswith((".mp4", ".wmv")):
-        raise HTTPException(status_code=400, detail="Wyjaśnienia AI nie są dostępne dla pytań z filmem wideo.")
-
-    # Prepare prompt
-    correct_ans = question.correct_answer.upper()
-    
-    if question.question_type == "TAK_NIE":
-        correct_friendly = "TAK" if correct_ans == "T" else "NIE"
-        prompt_text = (
-            f"Jesteś ekspertem ds. przepisów ruchu drogowego w Polsce.\n"
-            f"Przeanalizuj poniższe pytanie egzaminacyjne na prawo jazdy (Numer pytania: {question.question_number}) "
-            f"i wyjaśnij, dlaczego poprawna odpowiedź to {correct_friendly}.\n\n"
-            f"Treść pytania: {question.question_text}\n"
-            f"Możliwe odpowiedzi: TAK lub NIE.\n"
-            f"Poprawna odpowiedź: {correct_friendly}.\n\n"
-            f"Napisz BARDZO ZWIĘZŁE (maksymalnie 2 zdania), jasne i konkretne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa. "
-            f"Przejdź od razu do rzeczy (bez wstępów w stylu 'odpowiedź jest poprawna, ponieważ...')."
-        )
-    else:
-        correct_text = ""
-        if correct_ans == "A":
-            correct_text = question.answer_a
-        elif correct_ans == "B":
-            correct_text = question.answer_b
-        elif correct_ans == "C":
-            correct_text = question.answer_c
-
-        prompt_text = (
-            f"Jesteś ekspertem ds. przepisów ruchu drogowego w Polsce.\n"
-            f"Przeanalizuj poniższe pytanie egzaminacyjne na prawo jazdy (Numer pytania: {question.question_number}) "
-            f"i wyjaśnij, dlaczego poprawna odpowiedź to {correct_ans} ({correct_text}).\n\n"
-            f"Treść pytania: {question.question_text}\n"
-            f"Opcje odpowiedzi:\n"
-            f"A: {question.answer_a}\n"
-            f"B: {question.answer_b}\n"
-            f"C: {question.answer_c}\n\n"
-            f"Poprawna odpowiedź: {correct_ans} ({correct_text}).\n\n"
-            f"Napisz BARDZO ZWIĘZŁE (maksymalnie 2 zdania), jasne i konkretne wyjaśnienie w języku polskim, dlaczego ta odpowiedź jest prawidłowa, "
-            f"a pozostałe opcje są błędne. Przejdź od razu do rzeczy (bez wstępów)."
-        )
-
-    # Check for image
-    has_image = False
-    encoded_string = ""
-    mime_type = "image/jpeg"
-    if media_file:
-        media_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media")
-        full_path = os.path.join(media_dir, media_file)
-        if os.path.exists(full_path) and os.path.isfile(full_path):
-            try:
-                with open(full_path, "rb") as image_file:
-                    encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
-                has_image = True
-                if media_file.lower().endswith(".png"):
-                    mime_type = "image/png"
-                elif media_file.lower().endswith(".gif"):
-                    mime_type = "image/gif"
-            except Exception as e:
-                print(f"Error reading image file {full_path}: {e}")
-
-    # Build messages payload
-    if has_image:
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt_text},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{mime_type};base64,{encoded_string}"
-                        }
-                    }
-                ]
-            }
-        ]
-    else:
-        messages = [
-            {"role": "user", "content": prompt_text}
-        ]
-
-    # Call clanker API streaming
-    async def make_api_call_stream():
-        if question.ai_explanation:
-            chunk = {
-                "choices": [{"delta": {"content": question.ai_explanation}}]
-            }
-            yield "data: " + json.dumps(chunk) + "\n\n"
-            yield "data: [DONE]\n\n"
-            return
-
-        api_key = settings.CLANKER_API_KEY
-        if not api_key:
-            yield "data: " + json.dumps({"error": "Brak skonfigurowanego klucza API (CLANKER_API_KEY) w pliku .env."}) + "\n\n"
-            return
-            
-        url = settings.CLANKER_API_URL.rstrip('/') + "/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        chat_data = {
-            "model": "gem-gemini-3.5-flash",
-            "messages": messages,
-            "max_tokens": 300,
-            "stream": True
-        }
-        
-        q = queue.Queue()
-        loop = asyncio.get_running_loop()
-        
-        def run_request():
-            full_text_bg = ""
-            try:
-                # Disable SSL verify check to prevent certificate issues on macOS/VPS
-                response = requests.post(url, headers=headers, json=chat_data, stream=True, timeout=60, verify=False)
-                if response.status_code != 200:
-                    q.put(("error", f"Błąd API clanker: status {response.status_code}"))
-                    return
-                for line in response.iter_lines():
-                    if line:
-                        decoded = line.decode('utf-8').strip()
-                        q.put(("data", decoded))
-                        if decoded.startswith("data: "):
-                            data_str = decoded[6:]
-                            if data_str != "[DONE]":
-                                try:
-                                    parsed = json.loads(data_str)
-                                    content = parsed.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                                    if content:
-                                        full_text_bg += content
-                                except:
-                                    pass
-            except Exception as e:
-                q.put(("error", str(e)))
-            finally:
-                q.put(("done", None))
-                if full_text_bg:
-                    async def save_to_db(qid, text):
-                        from app.database import async_session
-                        from sqlalchemy import select
-                        async with async_session() as session:
-                            result = await session.execute(select(Question).where(Question.id == qid))
-                            q_obj = result.scalar_one_or_none()
-                            if q_obj:
-                                q_obj.ai_explanation = text
-                                await session.commit()
-                    
-                    asyncio.run_coroutine_threadsafe(save_to_db(question_id, full_text_bg), loop)
-
-        # Run request in background thread
-        thread = threading.Thread(target=run_request)
-        thread.start()
-        
-        try:
-            while True:
-                try:
-                    msg_type, val = q.get_nowait()
-                    if msg_type == "done":
-                        break
-                    elif msg_type == "error":
-                        yield "data: " + json.dumps({"error": val}) + "\n\n"
-                        break
-                    elif msg_type == "data":
-                        yield f"{val}\n\n"
-                except queue.Empty:
-                    await asyncio.sleep(0.05)
-        except asyncio.CancelledError:
-            # Klient przerwał strumieniowanie (np. przechodząc do następnego pytania)
-            raise
-
-    return StreamingResponse(make_api_call_stream(), media_type="text/event-stream")
 
 
 @router.get("/stats", response_model=QuestionStatsResponse)

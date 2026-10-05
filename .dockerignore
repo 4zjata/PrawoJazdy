@@ -1,0 +1,7 @@
+media
+prawo_jazdy_backend/znaki_drogowe_img
+prawo_jazdy_backend/prawo_jazdy.db
+node_modules
+.git
+.venv
+__pycache__
